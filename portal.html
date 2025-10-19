@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal Siswa & Guru - SMK Komputama Jeruklegi</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color:#f8f9fa; }
+    .login-box { max-width:420px; margin:auto; margin-top:100px; }
+    .portal { display:none; }
+    .card { border-radius:14px; }
+    .logout-btn { position:fixed; top:15px; right:20px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-box text-center p-4 bg-white shadow rounded">
+  <h3 class="mb-3 text-primary fw-bold"><i class="bi bi-person-fill me-2"></i>Login Portal</h3>
+  <select id="role" class="form-select mb-3">
+    <option value="siswa">Siswa</option>
+    <option value="guru">Guru</option>
+  </select>
+  <input id="username" type="text" class="form-control mb-3" placeholder="NIS / Username">
+  <input id="password" type="password" class="form-control mb-3" placeholder="Password">
+  <button id="loginBtn" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right me-1"></i>Masuk</button>
+  <p class="text-muted mt-3 small">
+    Akun siswa: <b>112233 / siswa123</b><br>
+    Akun guru: <b>guru1 / teach123</b>
+  </p>
+</div>
+
+<!-- PORTAL SISWA -->
+<div id="portalSiswa" class="portal container py-4">
+  <button id="logoutSiswa" class="btn btn-danger logout-btn"><i class="bi bi-box-arrow-right"></i> Logout</button>
+  <h2 class="fw-bold text-primary mb-4"><i class="bi bi-mortarboard-fill me-2"></i>Portal Siswa</h2>
+
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-person-badge-fill me-2 text-primary"></i>Profil Siswa</h5>
+        <p><b>Nama:</b> <span id="namaSiswa">-</span></p>
+        <p><b>Jurusan:</b> <span id="jurusanSiswa">-</span></p>
+        <p><b>Kelas:</b> <span id="kelasSiswa">-</span></p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>Jadwal Pelajaran</h5>
+        <ul id="jadwalSiswa" class="list-unstyled small mb-0"></ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-journal-check me-2 text-primary"></i>Nilai Semester</h5>
+        <table class="table table-bordered small">
+          <thead class="table-light">
+            <tr><th>Mata Pelajaran</th><th>Nilai</th></tr>
+          </thead>
+          <tbody id="nilaiSiswa"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PORTAL GURU -->
+<div id="portalGuru" class="portal container py-4">
+  <button id="logoutGuru" class="btn btn-danger logout-btn"><i class="bi bi-box-arrow-right"></i> Logout</button>
+  <h2 class="fw-bold text-primary mb-4"><i class="bi bi-person-workspace me-2"></i>Portal Guru</h2>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Jadwal Mengajar</h5>
+        <ul id="jadwalGuru" class="list-unstyled small mb-0"></ul>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i>Input Nilai</h5>
+        <input type="text" id="namaSiswaInput" class="form-control mb-2" placeholder="Nama siswa">
+        <input type="number" id="nilaiInput" class="form-control mb-2" placeholder="Nilai">
+        <button id="addNilaiBtn" class="btn btn-success w-100"><i class="bi bi-plus-circle me-1"></i>Tambah Nilai</button>
+        <hr>
+        <ul id="nilaiGuruList" class="list-unstyled small mb-0"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* --- DATA SIMULASI --- */
+const siswaData = {
+  nis: "112233", pass: "siswa123",
+  nama: "Ahmad Rizky", jurusan: "Teknik Komputer dan Jaringan", kelas: "XII TKJ 1",
+  jadwal: ["Senin: Jaringan Dasar", "Selasa: Keamanan Jaringan", "Rabu: Basis Data", "Kamis: PBO", "Jumat: Praktek Server"],
+  nilai: [{mapel:"Jaringan Dasar", nilai:88},{mapel:"PBO", nilai:91},{mapel:"Basis Data", nilai:85}]
+};
+const guruData = {
+  user:"guru1", pass:"teach123",
+  jadwal:["Senin: X TKJ 1","Selasa: XI TKJ 2","Rabu: XII TKJ 1","Kamis: X TKR 2","Jumat: XI AKL 1"]
+};
+
+/* --- LOGIN LOGIC --- */
+const loginBtn=document.getElementById("loginBtn");
+loginBtn.addEventListener("click",()=>{
+  const role=document.getElementById("role").value;
+  const user=document.getElementById("username").value.trim();
+  const pass=document.getElementById("password").value.trim();
+
+  if(role==="siswa" && user===siswaData.nis && pass===siswaData.pass){
+    localStorage.setItem("portal","siswa");
+    showPortal("siswa");
+  } else if(role==="guru" && user===guruData.user && pass===guruData.pass){
+    localStorage.setItem("portal","guru");
+    showPortal("guru");
+  } else {
+    alert("Username atau password salah!");
+  }
+});
+
+function showPortal(role){
+  document.getElementById("loginPage").style.display="none";
+  if(role==="siswa"){
+    const ps=document.getElementById("portalSiswa");
+    ps.style.display="block";
+    document.getElementById("namaSiswa").innerText=siswaData.nama;
+    document.getElementById("jurusanSiswa").innerText=siswaData.jurusan;
+    document.getElementById("kelasSiswa").innerText=siswaData.kelas;
+    document.getElementById("jadwalSiswa").innerHTML=siswaData.jadwal.map(j=>`<li>📘 ${j}</li>`).join("");
+    document.getElementById("nilaiSiswa").innerHTML=siswaData.nilai.map(n=>`<tr><td>${n.mapel}</td><td>${n.nilai}</td></tr>`).join("");
+  } else {
+    const pg=document.getElementById("portalGuru");
+    pg.style.display="block";
+    document.getElementById("jadwalGuru").innerHTML=guruData.jadwal.map(j=>`<li>📗 ${j}</li>`).join("");
+  }
+}
+
+const portal = localStorage.getItem("portal");
+if(portal) showPortal(portal);
+
+/* --- LOGOUT --- */
+document.getElementById("logoutSiswa").addEventListener("click",()=>{localStorage.removeItem("portal");location.reload();});
+document.getElementById("logoutGuru").addEventListener("click",()=>{localStorage.removeItem("portal");location.reload();});
+
+/* --- GURU INPUT NILAI --- */
+const nilaiGuruList=document.getElementById("nilaiGuruList");
+let nilaiGuru = JSON.parse(localStorage.getItem("nilaiGuru")) || [];
+function renderNilaiGuru(){
+  nilaiGuruList.innerHTML = nilaiGuru.map(n=>`<li>${n.nama} - ${n.nilai}</li>`).join("");
+}
+renderNilaiGuru();
+
+document.getElementById("addNilaiBtn").addEventListener("click",()=>{
+  const nama=document.getElementById("namaSiswaInput").value.trim();
+  const nilai=document.getElementById("nilaiInput").value.trim();
+  if(nama && nilai){
+    nilaiGuru.push({nama,nilai});
+    localStorage.setItem("nilaiGuru",JSON.stringify(nilaiGuru));
+    renderNilaiGuru();
+    document.getElementById("namaSiswaInput").value="";
+    document.getElementById("nilaiInput").value="";
+  }
+});
+</script>
+</body>
+</html>

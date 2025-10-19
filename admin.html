@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Admin - SMK Komputama Jeruklegi</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body { background-color:#f8f9fa; }
+    .login-box { max-width:400px; margin:auto; margin-top:100px; }
+    .dashboard { display:none; }
+    .card { border-radius:12px; }
+    .logout-btn { position:fixed; top:15px; right:20px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-box text-center p-4 bg-white shadow rounded">
+  <h3 class="mb-3 text-primary fw-bold"><i class="bi bi-person-circle me-2"></i>Login Admin</h3>
+  <input id="username" type="text" class="form-control mb-3" placeholder="Username">
+  <input id="password" type="password" class="form-control mb-3" placeholder="Password">
+  <button id="loginBtn" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right me-1"></i>Masuk</button>
+  <p class="text-muted mt-3 small">Gunakan akun simulasi: <b>admin / 12345</b></p>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div id="dashboard" class="dashboard container py-4">
+  <button id="logoutBtn" class="btn btn-danger logout-btn"><i class="bi bi-box-arrow-right"></i> Logout</button>
+  <h2 class="fw-bold text-primary mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard Admin</h2>
+
+  <div class="row g-4">
+    <!-- Card Statistik -->
+    <div class="col-md-4">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Statistik Siswa</h5>
+        <canvas id="chartSiswa"></canvas>
+      </div>
+    </div>
+
+    <!-- Card Tambah Berita -->
+    <div class="col-md-4">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-newspaper me-2 text-primary"></i>Tambah Berita</h5>
+        <input type="text" id="judulBerita" class="form-control mb-2" placeholder="Judul berita">
+        <textarea id="isiBerita" class="form-control mb-2" placeholder="Isi berita singkat"></textarea>
+        <button id="addNewsBtn" class="btn btn-warning w-100"><i class="bi bi-plus-circle me-1"></i>Tambah</button>
+        <hr>
+        <ul id="newsList" class="list-unstyled small mb-0"></ul>
+      </div>
+    </div>
+
+    <!-- Card Buku Tamu -->
+    <div class="col-md-4">
+      <div class="card shadow p-3">
+        <h5 class="fw-bold"><i class="bi bi-chat-dots-fill me-2 text-primary"></i>Pesan Buku Tamu</h5>
+        <ul id="guestBookAdmin" class="list-unstyled small mb-0"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* --- LOGIN LOGIC --- */
+const loginBtn = document.getElementById('loginBtn');
+const dashboard = document.getElementById('dashboard');
+const loginPage = document.getElementById('loginPage');
+const logoutBtn = document.getElementById('logoutBtn');
+
+function checkLogin() {
+  if(localStorage.getItem('adminLogin') === 'true'){
+    loginPage.style.display='none';
+    dashboard.style.display='block';
+    loadGuestBook();
+    loadNews();
+    loadChart();
+  } else {
+    loginPage.style.display='block';
+    dashboard.style.display='none';
+  }
+}
+checkLogin();
+
+loginBtn.addEventListener('click',()=>{
+  const user=document.getElementById('username').value.trim();
+  const pass=document.getElementById('password').value.trim();
+  if(user==='admin' && pass==='12345'){
+    localStorage.setItem('adminLogin','true');
+    checkLogin();
+  } else {
+    alert('Username atau password salah!');
+  }
+});
+logoutBtn.addEventListener('click',()=>{
+  localStorage.removeItem('adminLogin');
+  checkLogin();
+});
+
+/* --- GUESTBOOK MANAGEMENT --- */
+function loadGuestBook(){
+  const data = JSON.parse(localStorage.getItem('guestBook')) || [];
+  const list = document.getElementById('guestBookAdmin');
+  list.innerHTML='';
+  data.forEach((msg,i)=>{
+    const li=document.createElement('li');
+    li.className='border-bottom py-2';
+    li.innerHTML=`<b>${msg.name}</b>: ${msg.text}
+      <button class='btn btn-sm btn-danger float-end' onclick='deleteMsg(${i})'>
+        <i class="bi bi-trash"></i></button>`;
+    list.appendChild(li);
+  });
+}
+function deleteMsg(index){
+  const data = JSON.parse(localStorage.getItem('guestBook')) || [];
+  data.splice(index,1);
+  localStorage.setItem('guestBook',JSON.stringify(data));
+  loadGuestBook();
+}
+
+/* --- NEWS MANAGEMENT --- */
+function loadNews(){
+  const data = JSON.parse(localStorage.getItem('schoolNews')) || [];
+  const list = document.getElementById('newsList');
+  list.innerHTML='';
+  data.forEach((n,i)=>{
+    const li=document.createElement('li');
+    li.className='border-bottom py-1';
+    li.innerHTML=`<b>${n.title}</b> - ${n.text}
+      <button class='btn btn-sm btn-danger float-end' onclick='deleteNews(${i})'>
+        <i class="bi bi-x-circle"></i></button>`;
+    list.appendChild(li);
+  });
+}
+document.getElementById('addNewsBtn').addEventListener('click',()=>{
+  const title=document.getElementById('judulBerita').value.trim();
+  const text=document.getElementById('isiBerita').value.trim();
+  if(title && text){
+    const data = JSON.parse(localStorage.getItem('schoolNews')) || [];
+    data.push({title,text});
+    localStorage.setItem('schoolNews',JSON.stringify(data));
+    document.getElementById('judulBerita').value='';
+    document.getElementById('isiBerita').value='';
+    loadNews();
+  }
+});
+function deleteNews(i){
+  const data = JSON.parse(localStorage.getItem('schoolNews')) || [];
+  data.splice(i,1);
+  localStorage.setItem('schoolNews',JSON.stringify(data));
+  loadNews();
+
+  // load PPDB list (taruh di bagian loadNews/loadChart)
+function loadPpdb(){
+  const list = JSON.parse(localStorage.getItem('ppdbList')) || [];
+  // render singkat
+  const el = document.getElementById('ppdbListAdmin');
+  if(!el) {
+    // buat element kalau belum ada
+    const card = document.createElement('div');
+    card.className='card shadow p-3 mt-3';
+    card.innerHTML = `<h5 class="fw-bold">Daftar PPDB</h5><ul id="ppdbListAdmin" class="small list-unstyled mt-2"></ul>`;
+    document.querySelector('#dashboard .row').appendChild(card);
+  }
+  const target = document.getElementById('ppdbListAdmin');
+  target.innerHTML = list.map(p=>`<li class="border-bottom py-1"><b>${p.id}</b> - ${p.nama} (${p.jurusan})</li>`).join('') || '<li class="text-muted">Belum ada pendaftar</li>';
+}
+
+}
+
+/* --- CHART --- */
+function loadChart(){
+  const ctx=document.getElementById('chartSiswa');
+  new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:['TKJ','TKR','Akuntansi','Perbankan Syariah'],
+      datasets:[{data:[320,280,190,160],
+        backgroundColor:['#007bff','#ffc107','#28a745','#dc3545']}]
+    },
+    options:{plugins:{legend:{position:'bottom'}}}
+  });
+}
+</script>
+</body>
+</html>
